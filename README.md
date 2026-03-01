@@ -27,7 +27,7 @@ A **complete RAG application** for the NKP AI catalog. Uses **Weaviate** (vector
 | Environment Variable | Default | Description |
 |----------------------|---------|-------------|
 | `WEAVIATE_URL` | `http://weaviate.weaviate.svc.cluster.local:80` | Weaviate REST API URL |
-| `OLLAMA_URL` | `http://ollama.ollama.svc.cluster.local:11434` | Ollama API URL |
+| `OLLAMA_URL` | `http://ollama-ollama.ollama.svc.cluster.local:11434` | Ollama API URL |
 | `OLLAMA_EMBED_MODEL` | `nomic-embed-text` | Embedding model name |
 | `OLLAMA_LLM_MODEL` | `llama3.2` | Chat/LLM model name |
 

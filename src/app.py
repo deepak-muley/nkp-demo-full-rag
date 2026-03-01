@@ -18,7 +18,7 @@ WEAVIATE_URL = os.environ.get(
     "WEAVIATE_URL", "http://weaviate.weaviate.svc.cluster.local:80"
 ).rstrip("/")
 OLLAMA_URL = os.environ.get(
-    "OLLAMA_URL", "http://ollama.ollama.svc.cluster.local:11434"
+    "OLLAMA_URL", "http://ollama-ollama.ollama.svc.cluster.local:11434"
 ).rstrip("/")
 COLLECTION_NAME = "FullRAGDocs"
 DEMO_COLLECTION_NAME = "DemoRAGDocs"

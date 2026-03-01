@@ -30,7 +30,7 @@ env:
   - name: WEAVIATE_URL
     value: "http://weaviate.weaviate.svc.cluster.local:80"
   - name: OLLAMA_URL
-    value: "http://ollama.ollama.svc.cluster.local:11434"
+    value: "http://ollama-ollama.ollama.svc.cluster.local:11434"
 ```
 
 ## Model Requirements
