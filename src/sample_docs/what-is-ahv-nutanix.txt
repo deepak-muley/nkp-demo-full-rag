@@ -1,0 +1,46 @@
+What is AHV (Nutanix Acropolis Hypervisor)?
+
+Overview
+
+AHV stands for Acropolis Hypervisor. It is Nutanix's native, bare-metal Type-1 hypervisor that runs virtual machines (VMs) in datacenters, edge environments, and public clouds.
+
+Technical Foundation
+
+- Built on KVM (Kernel-based Virtual Machine), an open-source virtualization technology
+- Uses full hardware virtualization for guest VMs
+- Leverages Open vSwitch (OVS) for virtual networking
+
+Key Features
+
+- License-free: No additional virtualization licensing costs; included with Nutanix HCI
+- Unified management: Managed through Nutanix Prism, the same interface used for storage and compute
+- High availability: Built-in HA and live migration (vMotion-like) for VMs
+- Security: Integrated software-defined firewalls and microsegmentation
+- Data protection: Automated backup, disaster recovery, and self-healing configurations
+- Hybrid multicloud: Workload portability across on-premises and cloud environments
+
+Part of Acropolis
+
+AHV is a core component of Acropolis, Nutanix's hyperconverged infrastructure (HCI) operating system. Acropolis also includes:
+- Storage services (distributed storage fabric)
+- Virtual networking
+- Data protection and disaster recovery
+
+Deployment Options
+
+AHV can be installed directly on Nutanix-certified hardware from vendors such as:
+- Dell
+- HPE
+- Lenovo
+- Cisco
+- IBM
+- SuperMicro
+
+Alternative Hypervisors
+
+Nutanix HCI platforms can also run third-party hypervisors if preferred:
+- VMware ESXi
+- Microsoft Hyper-V
+- Citrix XenServer
+
+AHV is the default and recommended option for Nutanix environments, offering a fully integrated, cost-effective virtualization layer.

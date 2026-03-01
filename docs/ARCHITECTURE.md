@@ -27,14 +27,14 @@ This app implements a **complete RAG pipeline**:
 
   ensure_collection()
        │
-       ├── Create Weaviate schema (DemoDocs, vectorizer: none)
+       ├── Create Weaviate schema (RAGDocs, vectorizer: none) if needed
        │
-       ├── For each sample_docs/*.txt:
+       ├── If collection is empty, seed from sample_docs/*.txt:
        │     ├── Chunk text (400 chars, 50 overlap)
        │     ├── Embed each chunk via Ollama /api/embed
        │     └── POST /v1/objects with vector
        │
-       └── Skip if collection already exists
+       └── User can also upload documents via the same page
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  User Query (e.g. "What is Weaviate?")                                       │

@@ -12,7 +12,7 @@ A **complete RAG application** for the NKP AI catalog. Uses **Weaviate** (vector
 2. Enable **Ollama** from the NKP AI catalog
 3. Pull required models in Ollama: `nomic-embed-text` (embeddings), `llama3.2` (or your preferred LLM)
 4. Enable **Demo Full RAG** from the NKP AI catalog
-5. Open the app URL and ask questions
+5. Open the app URL — query and upload documents on the same page
 
 ## Features
 
@@ -21,6 +21,7 @@ A **complete RAG application** for the NKP AI catalog. Uses **Weaviate** (vector
 - **Vector search** — Weaviate stores vectors (vectorizer: none) and performs similarity search
 - **LLM generation** — Ollama generates answers grounded in retrieved chunks
 - **Source citations** — Shows which documents informed the answer
+- **Upload** — Add plain-text documents; sample docs (RAG, Weaviate, NKP, AHV) are pre-loaded
 
 ## Configuration
 
