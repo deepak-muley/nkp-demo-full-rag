@@ -1,0 +1,18 @@
+apiVersion: v2
+name: demo-full-rag
+description: Full RAG app for NKP AI catalog. Uses Weaviate (vector DB) and Ollama (embeddings + LLM).
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - nkp
+  - demo
+  - rag
+  - weaviate
+  - ollama
+  - ai
+home: https://github.com/deepak-muley/nkp-demo-full-rag
+sources:
+  - https://github.com/deepak-muley/nkp-demo-full-rag
+maintainers:
+  - name: deepak-muley
+    url: https://github.com/deepak-muley

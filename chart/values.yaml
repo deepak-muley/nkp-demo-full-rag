@@ -1,0 +1,22 @@
+replicas: 1
+
+image:
+  repository: ghcr.io/deepak-muley/demo-full-rag
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+# Connect to Weaviate and Ollama already installed in NKP catalog
+env:
+  - name: WEAVIATE_URL
+    value: "http://weaviate.weaviate.svc.cluster.local:80"
+  - name: OLLAMA_URL
+    value: "http://ollama.ollama.svc.cluster.local:11434"
+  - name: OLLAMA_EMBED_MODEL
+    value: "nomic-embed-text"
+  - name: OLLAMA_LLM_MODEL
+    value: "llama3.2"
+
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 8080
