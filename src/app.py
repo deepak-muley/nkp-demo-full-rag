@@ -21,6 +21,7 @@ OLLAMA_URL = os.environ.get(
     "OLLAMA_URL", "http://ollama.ollama.svc.cluster.local:11434"
 ).rstrip("/")
 COLLECTION_NAME = "FullRAGDocs"
+DEMO_COLLECTION_NAME = "DemoRAGDocs"
 EMBED_MODEL = os.environ.get("OLLAMA_EMBED_MODEL", "nomic-embed-text")
 LLM_MODEL = os.environ.get("OLLAMA_LLM_MODEL", "llama3.2")
 CHUNK_SIZE = 400
@@ -72,6 +73,87 @@ HTML = """
     <p class="err">{{ error }}</p>
   </div>
   {% endif %}
+  <p style="margin-top: 2rem;"><a href="/demo">→ RAG Demo: Upload & Query</a></p>
+</body>
+</html>
+"""
+
+DEMO_HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+  <title>RAG Demo — Upload & Query</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 1rem; }
+    .status { padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+    .ok { background: #d4edda; color: #155724; }
+    .err { background: #f8d7da; color: #721c24; }
+    .info { background: #cce5ff; color: #004085; }
+    h1 { color: #333; }
+    h2 { font-size: 1.1rem; margin-top: 1.5rem; color: #555; }
+    input, button { padding: 0.5rem 1rem; font-size: 1rem; }
+    .section { margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px; }
+    .results { margin-top: 1rem; padding: 1rem; background: #fff; border-radius: 8px; border: 1px solid #dee2e6; }
+    .answer { margin: 1rem 0; padding: 1rem; background: #e8f4f8; border-radius: 8px; white-space: pre-wrap; }
+    .sources { font-size: 0.9em; color: #666; margin-top: 0.5rem; }
+    .source { margin: 0.3rem 0; padding-left: 0.5rem; border-left: 3px solid #0d6efd; }
+    .steps { list-style: none; padding: 0; }
+    .steps li { padding: 0.5rem 0; padding-left: 1.5rem; position: relative; }
+    .steps li::before { content: "→"; position: absolute; left: 0; color: #0d6efd; font-weight: bold; }
+    .upload-form { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    .upload-form input[type="file"] { flex: 1; min-width: 200px; }
+  </style>
+</head>
+<body>
+  <h1>RAG Demo — The Complete Story</h1>
+  <p>See RAG in action: <strong>1)</strong> Ask a question (no data yet) → <strong>2)</strong> Upload a document → <strong>3)</strong> Ask again and get answers from your content.</p>
+  <div class="status {{ status_class }}">{{ message }}</div>
+
+  <div class="section">
+    <h2>Step 1 & 3: Ask a question</h2>
+    <form method="post" action="/demo">
+      <input type="hidden" name="action" value="query">
+      <input type="text" name="query" placeholder="e.g. What are the key features of this product?" value="{{ query }}" style="width: 70%;">
+      <button type="submit">Ask</button>
+    </form>
+  </div>
+
+  <div class="section">
+    <h2>Step 2: Upload a document (plain text)</h2>
+    <form method="post" action="/demo" enctype="multipart/form-data">
+      <input type="hidden" name="action" value="upload">
+      <div class="upload-form">
+        <input type="file" name="file" accept=".txt,text/plain" required>
+        <button type="submit">Upload & Index</button>
+      </div>
+    </form>
+    {% if upload_success %}
+    <p class="ok" style="margin-top: 0.5rem; padding: 0.5rem;">✓ Indexed {{ chunks_indexed }} chunk(s) from {{ upload_filename }}</p>
+    {% endif %}
+  </div>
+
+  {% if answer and sources %}
+  <div class="results">
+    <h3>Answer</h3>
+    <div class="answer">{{ answer }}</div>
+    <div class="sources">
+      <strong>Sources:</strong>
+      {% for s in sources %}
+      <div class="source"><strong>{{ s.title }}</strong>: {{ s.snippet }}</div>
+      {% endfor %}
+    </div>
+  </div>
+  {% elif empty_results %}
+  <div class="results">
+    <p class="info">No relevant documents found. Upload a document above, then ask again!</p>
+  </div>
+  {% elif query and error %}
+  <div class="results">
+    <p class="err">{{ error }}</p>
+  </div>
+  {% endif %}
+
+  <p style="margin-top: 2rem;"><a href="/">← Back to main RAG</a></p>
 </body>
 </html>
 """
@@ -180,7 +262,7 @@ def ensure_collection():
             weaviate_post("/v1/objects", obj)
 
 
-def vector_search(query: str, limit: int = 3) -> list[dict]:
+def vector_search(query: str, limit: int = 3, collection: str = COLLECTION_NAME) -> list[dict]:
     """Search Weaviate by vector similarity."""
     try:
         vectors = ollama_embed([query])
@@ -191,7 +273,7 @@ def vector_search(query: str, limit: int = 3) -> list[dict]:
     gql = f"""
     {{
       Get {{
-        {COLLECTION_NAME} (
+        {collection} (
           nearVector: {{ vector: {json.dumps(vec)} }}
           limit: {limit}
         ) {{
@@ -210,8 +292,58 @@ def vector_search(query: str, limit: int = 3) -> list[dict]:
     )
     r.raise_for_status()
     data = r.json()
-    items = data.get("data", {}).get("Get", {}).get(COLLECTION_NAME, [])
+    items = data.get("data", {}).get("Get", {}).get(collection, [])
     return items
+
+
+def ensure_demo_collection():
+    """Create demo collection (empty, no sample docs)."""
+    try:
+        schema = weaviate_get("/v1/schema")
+        if any(c.get("class") == DEMO_COLLECTION_NAME for c in schema.get("classes", [])):
+            return
+    except Exception:
+        pass
+
+    weaviate_post(
+        "/v1/schema",
+        {
+            "class": DEMO_COLLECTION_NAME,
+            "vectorizer": "none",
+            "properties": [
+                {"name": "title", "dataType": ["text"]},
+                {"name": "content", "dataType": ["text"]},
+                {"name": "source", "dataType": ["string"]},
+            ],
+        },
+    )
+
+
+def index_uploaded_document(content: str, filename: str, collection: str = DEMO_COLLECTION_NAME) -> int:
+    """Chunk, embed, and store uploaded document. Returns number of chunks indexed."""
+    title = Path(filename).stem.replace("-", " ").replace("_", " ").title()
+    chunks = chunk_text(content)
+    count = 0
+    for i, chunk in enumerate(chunks):
+        if not chunk.strip():
+            continue
+        try:
+            vectors = ollama_embed([chunk])
+            vec = vectors[0]
+        except Exception:
+            continue
+        obj = {
+            "class": collection,
+            "properties": {
+                "title": f"{title} (chunk {i+1})",
+                "content": chunk,
+                "source": filename,
+            },
+            "vector": vec,
+        }
+        weaviate_post("/v1/objects", obj)
+        count += 1
+    return count
 
 
 def generate_answer(query: str, chunks: list[dict]) -> str:
@@ -238,6 +370,69 @@ Answer based on the context above:"""
         return resp.get("message", {}).get("content", "").strip()
     except Exception as e:
         raise RuntimeError(f"Ollama chat failed: {e}") from e
+
+
+@app.route("/demo", methods=["GET", "POST"])
+def demo():
+    """Demo page: query (no results) → upload file → query again (results)."""
+    query = ""
+    answer = ""
+    sources = []
+    error = ""
+    empty_results = False
+    upload_success = False
+    upload_filename = ""
+    chunks_indexed = 0
+    status_class = "ok"
+    message = "Weaviate & Ollama: Connected"
+
+    try:
+        ensure_demo_collection()
+
+        if request.method == "POST":
+            action = request.form.get("action", "")
+            if action == "upload":
+                f = request.files.get("file")
+                if f and f.filename:
+                    content = f.read().decode("utf-8", errors="replace")
+                    chunks_indexed = index_uploaded_document(content, f.filename)
+                    upload_success = True
+                    upload_filename = f.filename
+            elif action == "query":
+                query = request.form.get("query", "").strip()
+                if query:
+                    chunks = vector_search(query, limit=3, collection=DEMO_COLLECTION_NAME)
+                    if chunks:
+                        answer = generate_answer(query, chunks)
+                        sources = [
+                            {
+                                "title": c.get("title", ""),
+                                "snippet": (c.get("content", "")[:150] + "...")
+                                if len(c.get("content", "")) > 150
+                                else c.get("content", ""),
+                            }
+                            for c in chunks
+                        ]
+                    else:
+                        empty_results = True
+    except Exception as e:
+        status_class = "err"
+        message = f"Error: {e}"
+        error = str(e)
+
+    return render_template_string(
+        DEMO_HTML,
+        status_class=status_class,
+        message=message,
+        query=query,
+        answer=answer,
+        sources=sources,
+        error=error,
+        empty_results=empty_results,
+        upload_success=upload_success,
+        upload_filename=upload_filename,
+        chunks_indexed=chunks_indexed,
+    )
 
 
 @app.route("/", methods=["GET", "POST"])
