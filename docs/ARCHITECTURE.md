@@ -29,12 +29,12 @@ This app implements a **complete RAG pipeline**:
        │
        ├── Create Weaviate schema (RAGDocs, vectorizer: none) if needed
        │
-       ├── If collection is empty, seed from sample_docs/*.txt:
+       ├── If collection is empty, seed from preload_docs/*.txt:
        │     ├── Chunk text (400 chars, 50 overlap)
        │     ├── Embed each chunk via Ollama /api/embed
        │     └── POST /v1/objects with vector
        │
-       └── User can also upload documents via the same page
+       └── User can add docs via dropdown (demo_docs) or upload (plain text)
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  User Query (e.g. "What is Weaviate?")                                       │

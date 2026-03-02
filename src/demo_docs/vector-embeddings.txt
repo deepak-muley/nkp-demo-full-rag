@@ -1,0 +1,5 @@
+What are Vector Embeddings?
+
+Vector embeddings are numerical representations of text, images, or other data. In RAG and semantic search, an embedding model converts text into a list of numbers (a vector) that captures its meaning. Similar concepts produce similar vectors, so you can find relevant content by comparing vectors rather than matching exact words.
+
+For example, "machine learning" and "AI" might have similar embeddings even though the words differ. Vector databases store these embeddings and support fast similarity search (e.g. cosine similarity or dot product) to retrieve the most relevant chunks for a query.

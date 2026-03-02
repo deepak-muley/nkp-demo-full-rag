@@ -64,6 +64,25 @@ HTML = """
   </div>
 
   <div class="section">
+    <h2>Add document from demo library</h2>
+    <form method="post" action="/">
+      <input type="hidden" name="action" value="add_demo">
+      <div class="upload-form">
+        <select name="demo_doc" required style="padding: 0.5rem 1rem; font-size: 1rem; min-width: 220px;">
+          <option value="">-- Select a document --</option>
+          {% for doc in demo_docs %}
+          <option value="{{ doc }}">{{ doc }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit">Add to Index</button>
+      </div>
+    </form>
+    {% if add_demo_success %}
+    <p class="ok" style="margin-top: 0.5rem; padding: 0.5rem;">✓ Indexed {{ chunks_indexed }} chunk(s) from {{ add_demo_filename }}</p>
+    {% endif %}
+  </div>
+
+  <div class="section">
     <h2>Upload a document (plain text)</h2>
     <form method="post" action="/" enctype="multipart/form-data">
       <input type="hidden" name="action" value="upload">
@@ -203,9 +222,9 @@ def ensure_collection():
             },
         )
 
-    # Seed from sample_docs when collection is empty
+    # Seed from preload_docs when collection is empty
     if collection_count() == 0:
-        docs_dir = Path(__file__).parent / "sample_docs"
+        docs_dir = Path(__file__).parent / "preload_docs"
         if docs_dir.exists():
             for f in docs_dir.glob("*.txt"):
                 content = f.read_text()
@@ -266,7 +285,15 @@ def vector_search(query: str, limit: int = 3) -> list[dict]:
     return items
 
 
-def index_uploaded_document(content: str, filename: str) -> int:
+def list_demo_docs() -> list[str]:
+    """Return sorted list of .txt filenames in demo_docs."""
+    docs_dir = Path(__file__).parent / "demo_docs"
+    if not docs_dir.exists():
+        return []
+    return sorted(f.name for f in docs_dir.glob("*.txt"))
+
+
+def index_document(content: str, filename: str) -> int:
     """Chunk, embed, and store uploaded document. Returns number of chunks indexed."""
     title = Path(filename).stem.replace("-", " ").replace("_", " ").title()
     chunks = chunk_text(content)
@@ -321,7 +348,7 @@ Answer based on the context above:"""
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    """Single page: query + upload. Uses RAGDocs collection with sample_docs pre-loaded."""
+    """Single page: query + upload + demo dropdown. All docs go to RAGDocs collection."""
     query = ""
     answer = ""
     sources = []
@@ -329,9 +356,12 @@ def index():
     empty_results = False
     upload_success = False
     upload_filename = ""
+    add_demo_success = False
+    add_demo_filename = ""
     chunks_indexed = 0
     status_class = "ok"
     message = "Weaviate & Ollama: Connected"
+    demo_docs = list_demo_docs()
 
     try:
         ensure_collection()
@@ -342,9 +372,19 @@ def index():
                 f = request.files.get("file")
                 if f and f.filename:
                     content = f.read().decode("utf-8", errors="replace")
-                    chunks_indexed = index_uploaded_document(content, f.filename)
+                    chunks_indexed = index_document(content, f.filename)
                     upload_success = True
                     upload_filename = f.filename
+            elif action == "add_demo":
+                demo_doc = request.form.get("demo_doc", "").strip()
+                if demo_doc and demo_doc in demo_docs:
+                    docs_dir = Path(__file__).parent / "demo_docs"
+                    filepath = docs_dir / demo_doc
+                    if filepath.exists():
+                        content = filepath.read_text()
+                        chunks_indexed = index_document(content, demo_doc)
+                        add_demo_success = True
+                        add_demo_filename = demo_doc
             elif action == "query":
                 query = request.form.get("query", "").strip()
                 if query:
@@ -378,7 +418,10 @@ def index():
         empty_results=empty_results,
         upload_success=upload_success,
         upload_filename=upload_filename,
+        add_demo_success=add_demo_success,
+        add_demo_filename=add_demo_filename,
         chunks_indexed=chunks_indexed,
+        demo_docs=demo_docs,
     )
 
 

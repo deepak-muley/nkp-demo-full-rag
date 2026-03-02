@@ -21,7 +21,7 @@ A **complete RAG application** for the NKP AI catalog. Uses **Weaviate** (vector
 - **Vector search** — Weaviate stores vectors (vectorizer: none) and performs similarity search
 - **LLM generation** — Ollama generates answers grounded in retrieved chunks
 - **Source citations** — Shows which documents informed the answer
-- **Upload** — Add plain-text documents; sample docs (RAG, Weaviate, NKP, AHV) are pre-loaded
+- **Preload** — RAG, Weaviate, NKP docs auto-loaded on startup; demo docs (AHV, vector embeddings) selectable from dropdown
 
 ## Configuration
 
